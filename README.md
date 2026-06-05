@@ -3,7 +3,7 @@
 This repository contains the code used to quantify and analyze *STMN2* 
 cryptic exons (CEs) from single-cell BAM files and to visualize the expression
 of marker genes across the anterior-posterior thalamic regions in the human brain
-using Visium spatial transcriptomics ([Trujillo et al.]())
+using Visium spatial transcriptomics ([Trujillo et al.]()).
 
 ## Full method
 
@@ -26,6 +26,11 @@ by [cellranger count](https://www.10xgenomics.com/support/software/cell-ranger/l
 - `possorted_genome_bam.bam.bai`
 
 ### Spatial transcriptomics
+
+Input to the current spatial transcriptomics analysis was generated and preprocessed 
+as described by [Schulmann et al.](https://www.biorxiv.org/content/10.1101/2024.09.03.611112v1).
+We used the pre-filtered Seurat object containing the anterior and posterior regions 
+from coronal sections of the human brain thalamus tissue.
 
 ## Analysis packages
 

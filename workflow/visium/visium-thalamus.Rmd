@@ -1,0 +1,210 @@
+---
+title: "Visium spatial transcriptomics"
+author: "Mira Sohn"
+output:
+    html_document:
+        code_folding: hide
+        df_print: paged
+        toc: true
+        toc_float: true
+        toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE,
+                      message=FALSE,
+                      echo=FALSE,
+                      cache.lazy=FALSE)
+```
+
+Last run: `r date()`
+
+This workflow is designed for exploratory analysis on the Visium dataset from the human thalamus 
+([Schulmann et al.](https://www.biorxiv.org/content/10.1101/2024.09.03.611112v1)).
+
+```{r libraries}
+# Libraries
+library(parallel)
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(Seurat)
+library(patchwork)
+library(sceasy)
+library(reticulate)
+library(spacexr)
+library(SummarizedExperiment)
+library(SpatialExperiment)
+```
+
+```{r additional_options}
+# Additional options
+set.seed(2570)
+source('helpers.R')
+use_condaenv("../../menv")
+
+# Specify the number of available cores
+n_cores <- future::availableCores()
+options(future.globals.maxSize=500000 * 1024^2,   # 500G (1000 * 1024^2 = 1G)
+        mc.cores=n_cores,
+        future.rng.onMisuse="ignore")
+
+# Import scanpy in R
+sc <- import("scanpy")
+```
+
+```{python ppackages}
+import anndata as ad
+import scanpy as sc
+import pandas as pd
+import numpy as np
+import os
+```
+
+```{r config}
+
+# --------------------------------------------------------------------------------
+# This chunk specifies input paths and variables in R
+# --------------------------------------------------------------------------------
+
+# Paths to input datasets
+input_path <- "../../input/Schulmann_visium/Visium_thal_seurat.rds"
+h5ad_list <- list(
+    InNeuSOX14neg="../../input/thalamus_neurons_reannotated/InNeuSOX14neg_adata.h5ad",
+    InNeuSOX14pos="../../input/thalamus_neurons_reannotated/InNeuSOX14pos_adata.h5ad",
+    ExNeuRNF220neg="../../input/thalamus_neurons_reannotated/ExNeuRNF220neg_adata.h5ad",
+    ExNeuRNF220pos="../../input/thalamus_neurons_reannotated/ExNeuRNF220pos_adata.h5ad"
+)
+
+# Path to output directory
+out_dir <- "visium-thalamus"
+
+# Specify genes of interest
+gene_list <- list(
+    set1=c('SYT1', 'GAD2', 'SOX14'),
+    set2=c('SYT1', 'SLC17A6', 'RNF220'),
+    set3=c('LAMP5', 'BCL11B', 'TUBB3', 'GRN')
+)
+
+# Annotation column name
+celltype_col <- "annotation_04142026"
+
+# Specify colors for plots
+plot_colors <- c('#F4F1DE', '#E07A5F', '#3D405B', '#4ecdc4')
+
+# Create directories if missing
+for (p in c(out_dir)) {
+    if (! dir.exists(p)) { dir.create(p, recursive=TRUE) }
+}
+```
+
+# Loading input data
+
+## Single-cell obj
+
+```{r import_dataset}
+
+# --------------------------------------------------------------------------------
+# This chunk imports the input dataset
+# --------------------------------------------------------------------------------
+
+# Import visium dataset
+seurat <- readRDS(input_path)
+
+print(paste("Input file path:", input_path))
+print(seurat)
+```
+
+## Staining images
+
+```{r hne_images, results='asis'}
+p <- SpatialFeaturePlot(
+    seurat,
+    features="nCount_Spatial",
+    alpha=c(0, 0)) + 
+    theme(legend.position="none")
+hne_svg <- file.path(out_dir, "HnE_image.svg")
+ggsave(hne_svg, p, device="svg")
+print(p)
+link_plot(hne_svg)
+```
+
+# Genes of interest {.tabset}
+
+The following genes of interest are explored across the image set. Gene not present
+in the current dataset are labeled as 'absent genes'.
+
+```{r genes_of_interest}
+
+# --------------------------------------------------------------------------------
+# This chunk cleans genes of interest
+# --------------------------------------------------------------------------------
+
+# Retrieve the normalized count matrix
+sct_mat <- GetAssayData(seurat, assay="SCT", layer="data")
+
+# Retrieve all gene symbols
+all_genes <- rownames(sct_mat)
+
+# Remove genes of interest if absent and print
+gene_set <- unique(unlist(gene_list))
+genes_absent <- gene_set[!gene_set %in% all_genes]
+genes_present <- setdiff(gene_set, genes_absent)
+print(paste0("- Genes of interest: ", paste0(gene_set, collapse=", ")))
+print(paste0("- Genes present: ", paste0(genes_present, collapse=", ")))
+print(paste0("- Genes absent: ", paste0(genes_absent, collapse=", ")))
+
+# Clean gene_set to exclude absent genes
+gene_set <- intersect(gene_set, genes_present)
+```
+
+Following the methodology of [Schulmann et al.](https://www.biorxiv.org/content/10.1101/2024.09.03.611112v1),
+we utilize normalized expression data generated via the SCTransform method 
+([Hafemeister et al.](https://link.springer.com/article/10.1186/s13059-019-1874-1)).
+
+```{r spatial_featureplot, results='asis'}
+
+# --------------------------------------------------------------------------------
+# This chunk explores the spatial expression of genes of interest
+# --------------------------------------------------------------------------------
+
+for (gene in gene_set) {
+    cat('##', gene, '\n\n')
+    p <- SpatialFeaturePlot(
+        seurat,
+        features=gene,
+        pt.size.factor=3.5)
+    print(p)
+    plot_path <- file.path(
+        out_dir,
+        paste0(gene, '_spatialfeature.svg'))
+    ggsave(plot_path,
+           p,
+           device="svg")
+    link_plot(plot_path)
+    cat('\n\n')
+}
+```
+
+# Updated Seurat obj
+
+
+```{r save}
+
+# --------------------------------------------------------------------------------
+# This chunk saves the Visium Seurat obj with RCTD-transferred annotations
+# --------------------------------------------------------------------------------
+
+out_rds <- file.path(out_dir, "updated_seurat_visium.rds")
+saveRDS(seurat, out_rds, compress=FALSE)
+
+print(paste("Spatial obj saved:", out_rds))
+```
+
+
+# Session info
+
+```{r session_info, collapse=FALSE}
+sessionInfo()
+```
+

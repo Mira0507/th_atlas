@@ -5,7 +5,7 @@ cryptic exons (CEs) from single-cell BAM files and to visualize the expression
 of marker genes across the anterior-posterior thalamic regions in the human brain
 using Visium spatial transcriptomics ([Trujillo et al.]()).
 
-## Full method
+## Full methods
 
 ### STMN2 cryptic exon detection
 
@@ -178,7 +178,6 @@ the `genes` key to your genes of interest.
 # Genes of interest
 genes:
   - 'STMN2'
-  - 'UNC13A'
 ```
 
 #### Analysis name
@@ -187,7 +186,7 @@ This will be used as the prefix of the output file name for the junction count
 matrix.
 
 ```yaml
-analysis: 'thalamus_excitatory'
+analysis: 'thalamus_neurons_reannotated'
 ```
 
 ### Workflow

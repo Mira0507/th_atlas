@@ -84,13 +84,13 @@ factor_groups <- list(
         'ExNeu RNF220-',
         'InNeu SOX14+',
         'InNeu SOX14-'),
-    study=c('Marsan', 'Biogen', 'Mathys'),
+    study=c('Marsan', 'Trujillo', 'Mathys'),
     study_specific_disease_specific=c(
         'Control-Marsan',
-        'Control-Biogen',
+        'Control-Trujillo',
         'Control-Mathys',
         'FTD-Marsan',
-        'FTD-Biogen',
+        'FTD-Trujillo',
         'AD-Mathys'),
     ftd_type=c('GRN', 'Sporadic')
 )
@@ -103,7 +103,7 @@ color_map <- list(
         AD="#FF6600"),
     study=c(
         Marsan="#FF00FF",
-        Biogen="#00FFFF",
+        Trujillo="#00FFFF",
         Mathys="#BFBFBF"),
     cell_type=c(
         Astrocyte="#ABD158",

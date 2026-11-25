@@ -3,7 +3,13 @@
 This repository contains the code used to quantify and analyze *STMN2* 
 cryptic exons (CEs) from single-cell BAM files and to visualize the expression
 of marker genes across anterior and posterior thalamic regions of the human brain
-using Visium spatial transcriptomics ([Trujillo et al. (placeholder)]()).
+using Visium spatial transcriptomics ([Trujillo et al.](https://doi.org/10.21203/rs.3.rs-10670822/v1)).
+
+## Pipeline workflow
+
+### *STMN2* cryptic exon detection
+
+![schematic](schematic/ce.png)
 
 ## Full methods
 
